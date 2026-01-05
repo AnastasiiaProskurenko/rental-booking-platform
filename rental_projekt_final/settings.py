@@ -3,22 +3,20 @@ Django settings for rental_projekt_final project.
 """
 
 from pathlib import Path
-import environ
+from environ import Env
 import os
 from .logging_config import get_logging_config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# django-environ
-env = environ.Env(
-    DEBUG=(bool, False),
-)
-env.read_env(os.path.join(BASE_DIR, '.env'))
+env = Env()
+env.read_env(BASE_DIR / '.env')
 
-# SECURITY
-SECRET_KEY = env('SECRET_KEY')
+
+SECRET_KEY = env.str('SECRET_KEY')
 DEBUG = env.bool('DEBUG', default=False)
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
+ALLOWED_HOSTS = env.str('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+
 
 ENVIRONMENT = os.environ.get('DJANGO_ENVIRONMENT', 'development')
 LOGGING = get_logging_config('development')
@@ -81,15 +79,15 @@ TEMPLATES = [
 WSGI_APPLICATION = 'rental_projekt_final.wsgi.application'
 
 # Database (по умолчанию sqlite)
-if env.bool('MYSQL', default=False):
+if env.bool('MYSQL'):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': env('DB_NAME'),
-            'USER': env('DB_USER'),
-            'PASSWORD': env('DB_PASSWORD'),
-            'HOST': env('DB_HOST'),
-            'PORT': env('DB_PORT'),
+            'NAME': env.str('MYSQL_DATABASE'),
+            'USER': env.str('MYSQL_USER'),
+            'PASSWORD': env.str('MYSQL_PASSWORD'),
+            'HOST': env.str('MYSQL_HOST'),
+            'PORT': env.int('MYSQL_PORT'),
         }
     }
 else:
