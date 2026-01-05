@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import SearchHistory
 
-# Якщо там використовується SearchQuery - додайте:
+
 SearchQuery = SearchHistory  # Alias
 
 

@@ -44,7 +44,7 @@ class Listing(TimeModel):
     """
     Модель оголошення про нерухомість
 
-    ✅ ВАЛІДАЦІЯ АДРЕСИ:
+    ВАЛІДАЦІЯ АДРЕСИ:
     1. Звичайна нерухомість (is_hotel_apartment=False):
        - Тільки ОДНЕ оголошення на адресу
        - Тільки ОДИН власник
@@ -67,13 +67,13 @@ class Listing(TimeModel):
     )
 
     title = models.CharField(
-        max_length=LISTING_TITLE_MAX_LENGTH,  # ✅ Константа
+        max_length=LISTING_TITLE_MAX_LENGTH,
         verbose_name='Title',
         help_text=f'Максимум {LISTING_TITLE_MAX_LENGTH} символів'
     )
 
     description = models.TextField(
-        max_length=LISTING_DESCRIPTION_MAX_LENGTH,  # ✅ Константа
+        max_length=LISTING_DESCRIPTION_MAX_LENGTH,
         verbose_name='Description',
         help_text=f'Максимум {LISTING_DESCRIPTION_MAX_LENGTH} символів'
     )
@@ -89,7 +89,7 @@ class Listing(TimeModel):
         verbose_name='Location'
     )
 
-    # ✅ Позначка квартири готельного типу
+    #  Позначка квартири готельного типу
     is_hotel_apartment = models.BooleanField(
         default=False,
         verbose_name='Hotel-type Apartment',
@@ -113,8 +113,8 @@ class Listing(TimeModel):
     num_rooms = models.PositiveIntegerField(
         verbose_name='Number of Rooms',
         validators=[
-            MinValueValidator(MIN_ROOMS),  # ✅ Константа
-            MaxValueValidator(MAX_ROOMS),  # ✅ Константа
+            MinValueValidator(MIN_ROOMS),
+            MaxValueValidator(MAX_ROOMS),
         ],
         help_text=(
             f'Від {MIN_ROOMS} до {MAX_ROOMS} кімнат. '
@@ -127,8 +127,8 @@ class Listing(TimeModel):
         blank=True,
         verbose_name='Number of Bedrooms',
         validators=[
-            MinValueValidator(MIN_BEDROOMS),  # ✅ Константа
-            MaxValueValidator(MAX_BEDROOMS),  # ✅ Константа
+            MinValueValidator(MIN_BEDROOMS),
+            MaxValueValidator(MAX_BEDROOMS),
         ],
         help_text=f'Від {MIN_BEDROOMS} до {MAX_BEDROOMS} спалень'
     )
@@ -137,8 +137,8 @@ class Listing(TimeModel):
         default=1,
         verbose_name='Number of Bathrooms',
         validators=[
-            MinValueValidator(MIN_BATHROOMS),  # ✅ Константа
-            MaxValueValidator(MAX_BATHROOMS),  # ✅ Константа
+            MinValueValidator(MIN_BATHROOMS),
+            MaxValueValidator(MAX_BATHROOMS),
         ],
         help_text=f'Від {MIN_BATHROOMS} до {MAX_BATHROOMS} ванних кімнат'
     )
@@ -146,21 +146,21 @@ class Listing(TimeModel):
     max_guests = models.PositiveIntegerField(
         verbose_name='Maximum Guests',
         validators=[
-            MinValueValidator(MIN_GUESTS),  # ✅ Константа
-            MaxValueValidator(MAX_GUESTS),  # ✅ Константа
+            MinValueValidator(MIN_GUESTS),
+            MaxValueValidator(MAX_GUESTS),
         ],
         help_text=f'Від {MIN_GUESTS} до {MAX_GUESTS} гостей'
     )
 
     area = models.DecimalField(
-        max_digits=AREA_MAX_DIGITS,  # ✅ Константа
-        decimal_places=AREA_DECIMAL_PLACES,  # ✅ Константа
+        max_digits=AREA_MAX_DIGITS,
+        decimal_places=AREA_DECIMAL_PLACES,
         null=True,
         blank=True,
         verbose_name='Area (sq.m.)',
         validators=[
-            MinValueValidator(MIN_AREA),  # ✅ Константа
-            MaxValueValidator(MAX_AREA),  # ✅ Константа
+            MinValueValidator(MIN_AREA),
+            MaxValueValidator(MAX_AREA),
         ],
         help_text=f'Від {MIN_AREA} до {MAX_AREA} кв.м.'
     )
@@ -170,19 +170,19 @@ class Listing(TimeModel):
     # ============================================
 
     price = models.DecimalField(
-        max_digits=PRICE_MAX_DIGITS,  # ✅ Константа
-        decimal_places=PRICE_DECIMAL_PLACES,  # ✅ Константа
+        max_digits=PRICE_MAX_DIGITS,
+        decimal_places=PRICE_DECIMAL_PLACES,
         verbose_name='Price per Night',
         validators=[
-            MinValueValidator(MIN_PRICE),  # ✅ Константа
-            MaxValueValidator(MAX_PRICE),  # ✅ Константа
+            MinValueValidator(MIN_PRICE),
+            MaxValueValidator(MAX_PRICE),
         ],
         help_text=f'Від {MIN_PRICE} до {MAX_PRICE} за ніч'
     )
 
     cleaning_fee = models.DecimalField(
-        max_digits=PRICE_MAX_DIGITS,  # ✅ Константа
-        decimal_places=PRICE_DECIMAL_PLACES,  # ✅ Константа
+        max_digits=PRICE_MAX_DIGITS,
+        decimal_places=PRICE_DECIMAL_PLACES,
         null=True,
         blank=True,
         verbose_name='Cleaning Fee',
@@ -248,7 +248,7 @@ class Listing(TimeModel):
     def clean(self):
         """
         Валідація моделі
-        ✅ Використовує константи для перевірок
+     Використовує константи для перевірок
         """
         super().clean()
 
@@ -260,7 +260,7 @@ class Listing(TimeModel):
 
     def _validate_address_uniqueness(self):
         """
-        ✅ КРИТИЧНА ВАЛІДАЦІЯ: Унікальність адреси
+         КРИТИЧНА ВАЛІДАЦІЯ: Унікальність адреси
 
         Правила:
         1. Звичайна нерухомість (is_hotel_apartment=False):
@@ -340,10 +340,10 @@ class Listing(TimeModel):
                     )
                 })
 
-            # ✅ Перевіряємо максимальну кількість кімнат
+            #  Перевіряємо максимальну кількість кімнат
             current_room_count = existing_on_address.count()
 
-            if current_room_count >= MAX_HOTEL_ROOMS_PER_ADDRESS:  # ✅ Константа
+            if current_room_count >= MAX_HOTEL_ROOMS_PER_ADDRESS:
                 raise ValidationError({
                     'address': (
                         f'Досягнуто максимальну кількість кімнат на одну адресу '
@@ -362,7 +362,7 @@ class Listing(TimeModel):
     @staticmethod
     def count_hotel_rooms_at_location(location: Location, owner) -> int:
         """
-        ✅ Підрахунок кількості готельних кімнат на адресі
+         Підрахунок кількості готельних кімнат на адресі
 
         Args:
             location: Локація
@@ -407,7 +407,7 @@ class Listing(TimeModel):
     def get_price_for_nights(self, num_nights: int) -> dict:
         """
         Розрахунок ціни за кількість ночей
-        ✅ Використовує константи для обчислень
+         Використовує константи для обчислень
         """
         from apps.common.constants import PLATFORM_FEE_PERCENTAGE
 
@@ -421,7 +421,7 @@ class Listing(TimeModel):
         subtotal = (base_price + cleaning_fee).quantize(cents)
         platform_fee = (
             subtotal * (Decimal(PLATFORM_FEE_PERCENTAGE) / Decimal('100'))
-        ).quantize(cents)  # ✅ Константа
+        ).quantize(cents)
 
         total = (subtotal + platform_fee).quantize(cents)
 
@@ -450,8 +450,8 @@ class ListingPrice(TimeModel):
     )
 
     amount = models.DecimalField(
-        max_digits=PRICE_MAX_DIGITS,  # ✅ Константа
-        decimal_places=PRICE_DECIMAL_PLACES,  # ✅ Константа
+        max_digits=PRICE_MAX_DIGITS,
+        decimal_places=PRICE_DECIMAL_PLACES,
         verbose_name='Price per Night'
     )
 
@@ -473,18 +473,18 @@ class ListingPrice(TimeModel):
 class Amenity(TimeModel):
     """
     Модель зручностей
-    ✅ Використовує константи
+     Використовує константи
     """
     from apps.common.constants import AMENITY_NAME_MAX_LENGTH, AMENITY_ICON_MAX_LENGTH
 
     name = models.CharField(
-        max_length=AMENITY_NAME_MAX_LENGTH,  # ✅ Константа
+        max_length=AMENITY_NAME_MAX_LENGTH,
         unique=True,
         verbose_name='Name'
     )
 
     icon = models.CharField(
-        max_length=AMENITY_ICON_MAX_LENGTH,  # ✅ Константа
+        max_length=AMENITY_ICON_MAX_LENGTH,
         blank=True,
         verbose_name='Icon',
         help_text='Назва іконки (наприклад: wifi, parking, pool)'

@@ -38,7 +38,7 @@ class CanCreateReviewAsCustomer(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        # ✅ адмін може все
+        #  адмін може все
         user = request.user
         if user.is_authenticated and (user.is_staff or user.is_superuser or user.is_admin()):
             return True

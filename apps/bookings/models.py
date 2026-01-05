@@ -38,7 +38,7 @@ class Booking(TimeModel):
     """
     Модель бронювання
 
-    ✅ ВАЛІДАЦІЯ:
+    ВАЛІДАЦІЯ:
     1. Дати check-in/check-out коректні
     2. Кількість гостей не перевищує максимум
     3. Немає перетину дат з іншими бронюваннями
@@ -88,8 +88,8 @@ class Booking(TimeModel):
     num_guests = models.PositiveIntegerField(
         verbose_name='Number of Guests',
         validators=[
-            MinValueValidator(MIN_GUESTS),  # ✅ Константа
-            MaxValueValidator(MAX_GUESTS),  # ✅ Константа
+            MinValueValidator(MIN_GUESTS),
+            MaxValueValidator(MAX_GUESTS),
         ],
         help_text=f'Від {MIN_GUESTS} до {MAX_GUESTS} гостей'
     )
@@ -109,40 +109,40 @@ class Booking(TimeModel):
     num_nights = models.PositiveIntegerField(
         verbose_name='Number of Nights',
         validators=[
-            MinValueValidator(MIN_BOOKING_DURATION_DAYS),  # ✅ Константа
-            MaxValueValidator(MAX_BOOKING_DURATION_DAYS),  # ✅ Константа
+            MinValueValidator(MIN_BOOKING_DURATION_DAYS),
+            MaxValueValidator(MAX_BOOKING_DURATION_DAYS),
         ],
         help_text=f'Від {MIN_BOOKING_DURATION_DAYS} до {MAX_BOOKING_DURATION_DAYS} ночей',
         editable=False
     )
 
     base_price = models.DecimalField(
-        max_digits=PRICE_MAX_DIGITS,  # ✅ Константа
-        decimal_places=PRICE_DECIMAL_PLACES,  # ✅ Константа
+        max_digits=PRICE_MAX_DIGITS,
+        decimal_places=PRICE_DECIMAL_PLACES,
         verbose_name='Base Price',
         help_text='price_per_night * num_nights'
     )
 
     cleaning_fee = models.DecimalField(
-        max_digits=PRICE_MAX_DIGITS,  # ✅ Константа
-        decimal_places=PRICE_DECIMAL_PLACES,  # ✅ Константа
+        max_digits=PRICE_MAX_DIGITS,
+        decimal_places=PRICE_DECIMAL_PLACES,
         default=0,
         verbose_name='Cleaning Fee'
     )
 
     platform_fee = models.DecimalField(
-        max_digits=PRICE_MAX_DIGITS,  # ✅ Константа
-        decimal_places=PRICE_DECIMAL_PLACES,  # ✅ Константа
+        max_digits=PRICE_MAX_DIGITS,
+        decimal_places=PRICE_DECIMAL_PLACES,
         verbose_name='Platform Fee',
-        help_text=f'{PLATFORM_FEE_PERCENTAGE}% від загальної суми'  # ✅ Константа
+        help_text=f'{PLATFORM_FEE_PERCENTAGE}% від загальної суми'
     )
 
     total_price = models.DecimalField(
-        max_digits=PRICE_MAX_DIGITS,  # ✅ Константа
-        decimal_places=PRICE_DECIMAL_PLACES,  # ✅ Константа
+        max_digits=PRICE_MAX_DIGITS,
+        decimal_places=PRICE_DECIMAL_PLACES,
         verbose_name='Total Price',
         validators=[
-            MinValueValidator(MIN_PAYMENT_AMOUNT),  # ✅ Константа
+            MinValueValidator(MIN_PAYMENT_AMOUNT),
         ],
         help_text='Повна вартість бронювання'
     )
@@ -170,7 +170,7 @@ class Booking(TimeModel):
     # ============================================
 
     special_requests = models.TextField(
-        max_length=SPECIAL_REQUESTS_MAX_LENGTH,  # ✅ Константа
+        max_length=SPECIAL_REQUESTS_MAX_LENGTH,
         blank=True,
         verbose_name='Special Requests',
         help_text=f'Максимум {SPECIAL_REQUESTS_MAX_LENGTH} символів'
@@ -215,7 +215,7 @@ class Booking(TimeModel):
 
     def clean(self):
         """
-        ✅ Валідація бронювання з використанням констант
+         Валідація бронювання з використанням констант
         """
         super().clean()
 
@@ -245,11 +245,11 @@ class Booking(TimeModel):
                 'check_out': 'Check-out date must be after check-in date'
             })
 
-        # ✅ Використовуємо константи для перевірки максимального часу
+        #  Використовуємо константи для перевірки максимального часу
         today = timezone.now().date()
 
         # Мінімальний час до заїзду
-        min_checkin = today + timedelta(days=MIN_DAYS_BEFORE_CHECKIN)  # ✅ Константа
+        min_checkin = today + timedelta(days=MIN_DAYS_BEFORE_CHECKIN)
         if self.check_in < min_checkin:
             raise ValidationError({
                 'check_in': (
@@ -258,7 +258,7 @@ class Booking(TimeModel):
             })
 
         # Максимальний час до заїзду
-        max_checkin = today + timedelta(days=MAX_DAYS_BEFORE_CHECKIN)  # ✅ Константа
+        max_checkin = today + timedelta(days=MAX_DAYS_BEFORE_CHECKIN)
         if self.check_in > max_checkin:
             raise ValidationError({
                 'check_in': (
@@ -268,7 +268,7 @@ class Booking(TimeModel):
 
     def _validate_duration(self):
         """
-        ✅ Валідація тривалості бронювання з константами
+         Валідація тривалості бронювання з константами
         """
         if not self.check_in or not self.check_out:
             return
@@ -276,7 +276,7 @@ class Booking(TimeModel):
         duration = (self.check_out - self.check_in).days
         self.num_nights = duration
 
-        # ✅ Мінімальна тривалість
+        #  Мінімальна тривалість
         if duration < MIN_BOOKING_DURATION_DAYS:
             raise ValidationError({
                 'check_out': (
@@ -285,7 +285,7 @@ class Booking(TimeModel):
                 )
             })
 
-        # ✅ Максимальна тривалість
+        #  Максимальна тривалість
         if duration > MAX_BOOKING_DURATION_DAYS:
             raise ValidationError({
                 'check_out': (
@@ -309,7 +309,7 @@ class Booking(TimeModel):
 
     def _validate_date_overlap(self):
         """
-        ✅ Валідація перетину дат
+         Валідація перетину дат
         Перевіряє чи немає інших підтверджених бронювань на ці дати
         """
         if not all([self.check_in, self.check_out, self.listing_id]):
@@ -343,7 +343,7 @@ class Booking(TimeModel):
 
     def _calculate_prices(self):
         """
-        ✅ Автоматичний розрахунок всіх цін з використанням констант
+         Автоматичний розрахунок всіх цін з використанням констант
         """
         if not all([self.check_in, self.check_out, self.listing_id]):
             return
@@ -375,7 +375,7 @@ class Booking(TimeModel):
         # Підсумок до комісії
         subtotal = (self.base_price + self.cleaning_fee).quantize(cents)
 
-        # ✅ Комісія платформи (використовуємо константу)
+        #  Комісія платформи (використовуємо константу)
         self.platform_fee = (subtotal * (Decimal(PLATFORM_FEE_PERCENTAGE) / Decimal('100'))).quantize(cents)
 
         # Загальна сума
@@ -385,7 +385,7 @@ class Booking(TimeModel):
     def is_cancellable(self) -> bool:
         """
         Чи можна скасувати бронювання
-        ✅ Використовує константи для політик скасування
+         Використовує константи для політик скасування
         """
         from apps.common.constants import (
             CANCELLATION_FLEXIBLE_HOURS,
@@ -406,7 +406,7 @@ class Booking(TimeModel):
         hours_until_checkin = (check_in_datetime - now).total_seconds() / 3600
         days_until_checkin = hours_until_checkin / 24
 
-        # ✅ Використовуємо константи для різних політик
+        #  Використовуємо константи для різних політик
         if self.cancellation_policy == CancellationPolicy.FLEXIBLE:
             return hours_until_checkin >= CANCELLATION_FLEXIBLE_HOURS
 
@@ -426,7 +426,7 @@ class Booking(TimeModel):
 
     def calculate_refund_amount(self) -> Decimal:
         """
-        ✅ Розрахунок суми повернення з константами
+         Розрахунок суми повернення з константами
         """
         from apps.common.constants import (
             CANCELLATION_FLEXIBLE_HOURS,
@@ -446,19 +446,19 @@ class Booking(TimeModel):
         hours_until_checkin = (check_in_datetime - now).total_seconds() / 3600
         days_until_checkin = hours_until_checkin / 24
 
-        # ✅ Flexible: повне повернення якщо > 24 годин
+        #  Flexible: повне повернення якщо > 24 годин
         if self.cancellation_policy == CancellationPolicy.FLEXIBLE:
             if hours_until_checkin >= CANCELLATION_FLEXIBLE_HOURS:
                 return self.total_price
             return Decimal('0')
 
-        # ✅ Moderate: повне якщо > 5 днів
+        #  Moderate: повне якщо > 5 днів
         elif self.cancellation_policy == CancellationPolicy.MODERATE:
             if days_until_checkin >= CANCELLATION_MODERATE_DAYS:
                 return self.total_price
             return Decimal('0')
 
-        # ✅ Strict: повне якщо > 7 днів, 50% якщо > 2 днів
+        #  Strict: повне якщо > 7 днів, 50% якщо > 2 днів
         elif self.cancellation_policy == CancellationPolicy.STRICT:
             if days_until_checkin >= CANCELLATION_STRICT_DAYS:
                 return self.total_price
@@ -466,7 +466,7 @@ class Booking(TimeModel):
                 return self.total_price * Decimal('0.5')
             return Decimal('0')
 
-        # ✅ Super Strict: повне якщо > 30 днів, 50% якщо > 14 днів
+        #  Super Strict: повне якщо > 30 днів, 50% якщо > 14 днів
         elif self.cancellation_policy == CancellationPolicy.SUPER_STRICT:
             if days_until_checkin >= CANCELLATION_SUPER_STRICT_DAYS:
                 return self.total_price
@@ -515,18 +515,18 @@ class Booking(TimeModel):
             update_fields_set = set(update_fields)
             touches_date_logic = not date_related_fields.isdisjoint(update_fields_set)
         else:
-            # Якщо update_fields не передали (звичайний save) — вважаємо що потенційно
-            # могли змінити що завгодно, тому валідуємо
+
+
             touches_date_logic = True
 
-        # ✅ Перерахунок і повна валідація тільки коли:
+        # Перерахунок і повна валідація тільки коли:
         # - створення
         # - або змінюємо дати/гостей/лістинг/цінові поля
         if creating or touches_date_logic:
             self._calculate_prices()
             self.full_clean()
         else:
-            # ✅ status-only (або cancellation_reason/cancelled_at і т.п.) — не валідимо дати
+            #  status-only (або cancellation_reason/cancelled_at і т.п.) — не валідимо дати
             # і не рахуємо ціни
             pass
 

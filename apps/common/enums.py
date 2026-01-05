@@ -213,6 +213,7 @@ class Language(models.TextChoices):
     EN = 'en', 'English'
     RU = 'ru', 'Русский'
     PL = 'pl', 'Polski'
+    DE = 'de', 'Deutsch'
 
 
 # ============================================

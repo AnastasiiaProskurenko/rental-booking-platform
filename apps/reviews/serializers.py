@@ -25,7 +25,7 @@ class ReviewerSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    # read-only (як у тебе)
+    # read-only
     reviewer_name = serializers.CharField(source='reviewer.username', read_only=True)
     listing_title = serializers.CharField(source='listing.title', read_only=True)
     has_owner_response = serializers.BooleanField(read_only=True)
@@ -100,7 +100,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         user = request.user
         is_admin = bool(user.is_staff or user.is_superuser)
 
-        # ✅ UPDATE (PATCH/PUT): booking_id НЕ потрібен
+        # UPDATE (PATCH/PUT): booking_id НЕ потрібен
         if self.instance is not None:
             rating = attrs.get('rating', getattr(self.instance, 'rating', None))
             comment = (attrs.get('comment', getattr(self.instance, 'comment', '')) or '').strip()
@@ -111,7 +111,7 @@ class ReviewSerializer(serializers.ModelSerializer):
             attrs['comment'] = comment
             return attrs
 
-        # ✅ CREATE (POST): booking_id ОБОВ’ЯЗКОВИЙ
+        #  CREATE (POST): booking_id ОБОВ’ЯЗКОВИЙ
         booking_id = attrs.get('booking_id')
         if not booking_id:
             raise serializers.ValidationError({'booking_id': _('Booking is required')})
@@ -160,9 +160,9 @@ class ListingRatingSerializer(serializers.ModelSerializer):
     """
     Serializer для статистики рейтингів оголошення
 
-    ✅ Середній рейтинг
-    ✅ Кількість відгуків
-    ✅ Розподіл за зірками
+     Середній рейтинг
+     Кількість відгуків
+     Розподіл за зірками
     """
 
     listing_id = serializers.IntegerField(source='listing.id', read_only=True)
@@ -263,10 +263,10 @@ class OwnerRatingSerializer(serializers.ModelSerializer):
     """
     Serializer для статистики рейтингів власника
 
-    ✅ Середній рейтинг власника
-    ✅ Кількість відгуків
-    ✅ Кількість оголошень
-    ✅ Розподіл за зірками
+     Середній рейтинг власника
+     Кількість відгуків
+     Кількість оголошень
+     Розподіл за зірками
     """
 
     owner_id = serializers.IntegerField(source='owner.id', read_only=True)

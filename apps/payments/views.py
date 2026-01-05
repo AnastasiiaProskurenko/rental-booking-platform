@@ -44,7 +44,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 amount=booking.total_price
             )
         except DjangoValidationError as e:
-            # превращаем model ValidationError → нормальный HTTP 400
+
             raise DRFValidationError(e.message_dict)
 
     @action(detail=True, methods=['post'])

@@ -25,7 +25,7 @@ class User(AbstractUser, TimeModel):
     def get_full_name(self):
         return f'{self.first_name} {self.last_name}'.strip() or self.username
 
-    # ✅ role-based helpers
+    #  role-based helpers
     def is_customer(self):
         return self.role == UserRole.CUSTOMER
 

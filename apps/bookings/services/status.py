@@ -6,15 +6,13 @@ from django.utils import timezone
 
 from apps.common.auth import is_admin
 
-# Імпорт підкоригуй під свій шлях/назву enum
 from apps.bookings.models import Booking, BookingStatus
 
 
 def _as_date(dt):
     if dt is None:
         return None
-    # якщо у тебе DateField — повернеться date
-    # якщо DateTimeField — візьмемо date()
+
     return dt if hasattr(dt, "year") and not hasattr(dt, "hour") else dt.date()
 
 
@@ -27,7 +25,7 @@ def _require_owner_or_admin(*, booking: Booking, actor):
 
 
 def _require_reviewer_or_owner_or_admin(*, booking: Booking, actor):
-    # на випадок, якщо cancel дозволяє і customer, і owner, і admin — можна не використовувати
+
     if is_admin(actor):
         return
     if booking.customer == actor:
@@ -68,8 +66,7 @@ def approve_booking(*, booking: Booking, actor) -> Booking:
     booking.status = BookingStatus.CONFIRMED
     booking.approved_at = timezone.now() if hasattr(booking, "approved_at") else None
 
-    # якщо у моделі є clean() / full_clean() — воно зловить інваріанти
-    #booking.full_clean()
+
     _safe_save(booking, ["status", "approved_at", "updated_at"])
 
     return booking
@@ -91,7 +88,6 @@ def reject_booking(*, booking: Booking, actor, reason: str | None = None) -> Boo
     if hasattr(booking, "rejected_at"):
         booking.rejected_at = timezone.now()
 
-    #booking.full_clean()
     _safe_save(booking, ["status", "rejected_reason", "rejected_at", "updated_at"])
 
     return booking
@@ -124,7 +120,7 @@ def cancel_booking(*, booking: Booking, actor, reason: str | None = None) -> Boo
     if hasattr(booking, "cancellation_reason") and reason is not None:
         booking.cancellation_reason = reason
 
-    #booking.full_clean()
+
     _safe_save(booking, ["status", "cancelled_at", "cancelled_by", "cancellation_reason", "updated_at"])
 
     return booking
@@ -151,7 +147,7 @@ def complete_booking(*, booking: Booking, actor) -> Booking:
     if hasattr(booking, "completed_at"):
         booking.completed_at = timezone.now()
 
-    #booking.full_clean()
+
     _safe_save(booking, ["status", "completed_at", "updated_at"])
 
     return booking

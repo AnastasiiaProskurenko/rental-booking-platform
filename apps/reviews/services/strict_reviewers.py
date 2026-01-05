@@ -97,7 +97,7 @@ def compute_strict_reviewers(*, base_qs, min_reviews=10, min_other_reviews=2, li
 
     qs = base_qs.filter(rating__isnull=False, is_visible=True)
 
-    # ✅ FIX: dict() не може прийняти 3-елементні кортежі напряму
+
     listing_stats = {
         listing_id: (avg_rating, cnt)
         for listing_id, avg_rating, cnt in (

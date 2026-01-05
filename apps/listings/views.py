@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, status, filters
+from rest_framework import viewsets, permissions,  filters
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer, TemplateHTMLRenderer
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -17,7 +17,6 @@ from .serializers import (
     ListingSerializer,
     ListingDetailSerializer,
     ListingPhotoSerializer,
-    PublicListingSerializer,
     PublicListingDetailSerializer,
     ListingListSerializer,
 )
@@ -41,7 +40,7 @@ class ListingViewSet(viewsets.ModelViewSet):
     queryset = (
         Listing.objects
         .select_related("location", "owner")
-        .prefetch_related("photos")  # ✅
+        .prefetch_related("photos")
         .all()
     )
 
@@ -167,7 +166,7 @@ class ListingViewSet(viewsets.ModelViewSet):
     )
     def my_listings(self, request):
         """
-        ✅ Повертає оголошення поточного користувача
+         Повертає оголошення поточного користувача
         GET /api/listings/my_listings/
         """
         queryset = self.get_queryset().filter(owner=request.user)

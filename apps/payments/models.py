@@ -14,7 +14,7 @@ class RefundStatus(models.TextChoices):
 class Payment(TimeModel):
     """
     Модель платежу
-    ✅ З валідаторами для всіх числових полів
+     З валідаторами для всіх числових полів
     """
 
     booking = models.OneToOneField(
@@ -30,7 +30,7 @@ class Payment(TimeModel):
         verbose_name='Customer'
     )
 
-    # ✅ ЧИСЛОВІ ПОЛЯ З ВАЛІДАТОРАМИ
+    # ЧИСЛОВІ ПОЛЯ З ВАЛІДАТОРАМИ
 
     amount = models.DecimalField(
         max_digits=10,
@@ -117,7 +117,7 @@ class Payment(TimeModel):
 class Refund(TimeModel):
     """
     Модель повернення коштів
-    ✅ З валідаторами для всіх числових полів
+    З валідаторами для всіх числових полів
     """
 
     payment = models.ForeignKey(
@@ -127,7 +127,7 @@ class Refund(TimeModel):
         verbose_name='Payment'
     )
 
-    # ✅ ЧИСЛОВІ ПОЛЯ З ВАЛІДАТОРАМИ
+    #  ЧИСЛОВІ ПОЛЯ З ВАЛІДАТОРАМИ
 
     amount = models.DecimalField(
         max_digits=10,

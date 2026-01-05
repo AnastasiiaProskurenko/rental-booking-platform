@@ -61,7 +61,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
         else:
             queryset = queryset.filter(is_visible=True)
 
-        # ✅ ФІЛЬТР ПО РЕЙТИНГУ
+        #  ФІЛЬТР ПО РЕЙТИНГУ
         rating = self.request.query_params.get('rating')
         if rating:
             try:
@@ -466,7 +466,7 @@ class StrictReviewersAnalyticsView(APIView):
             limit=limit,
         )
 
-        # ✅ direction-фільтр
+        # direction-фільтр
         if direction == 'strict':
             rows = [r for r in rows if r['harshness_index'] < 0]
         elif direction == 'lenient':

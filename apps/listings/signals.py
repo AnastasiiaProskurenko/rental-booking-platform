@@ -2,7 +2,7 @@ import logging
 from django.apps import apps
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.apps import apps
+
 
 logger = logging.getLogger(__name__)
 

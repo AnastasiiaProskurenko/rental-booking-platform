@@ -23,7 +23,7 @@ class SearchQueryViewSet(viewsets.ViewSet):
         """Повертає найпопулярніші пошукові запити"""
         from django.db import models
 
-        # ✅ Виключаємо пусті запити та запити без фільтрів
+        #  Виключаємо пусті запити та запити без фільтрів
         popular_queries = SearchHistory.objects.exclude(
             query='',
             filters={}
@@ -97,13 +97,13 @@ class SearchViewSet(viewsets.ViewSet):
 
         results_count = listings.count()
 
-        # ✅ Зберегти в історію ТІЛЬКИ якщо є query АБО фільтри
+        #  Зберегти в історію ТІЛЬКИ якщо є query АБО фільтри
         filters_data = {
             k: v for k, v in filters.items()
             if k != 'query' and v not in (None, '', [])
         }
 
-        # ✅ Записуємо тільки якщо є що записувати
+        #  Записуємо тільки якщо є що записувати
         if query or filters_data:
             SearchHistory.objects.create(
                 user=request.user if request.user.is_authenticated else None,

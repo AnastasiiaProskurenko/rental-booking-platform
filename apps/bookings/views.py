@@ -271,7 +271,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 
         qs = self.get_queryset().filter(status=BookingStatus.PENDING)
 
-        # ✅ тільки owner обмежуємо по своїх оголошеннях
+        # тільки owner обмежуємо по своїх оголошеннях
         if request.user.is_owner() and not request.user.is_admin():
             qs = qs.filter(listing__owner=request.user)
 
@@ -406,7 +406,7 @@ class BookingViewSet(viewsets.ModelViewSet):
     def can_review(self, request, pk=None):
         booking = self.get_object()
 
-        # ✅ Дозволено customer або admin
+        #  Дозволено customer або admin
         if request.user != booking.customer and not request.user.is_admin():
             return Response(
                 {'error': 'Only customer or admin can check review availability'},

@@ -165,7 +165,7 @@ class BookingCreateSerializer(serializers.ModelSerializer):
                 **validated_data  # location вже тут
             )
         except DjangoValidationError as e:
-            # Перетворюємо model ValidationError → DRF ValidationError (400)
+
             if hasattr(e, "message_dict"):
                 raise DRFValidationError(e.message_dict)
             raise DRFValidationError({"detail": e.messages})
@@ -176,7 +176,7 @@ class BookingCreateSerializer(serializers.ModelSerializer):
 class BookingUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
-        # ✅ ДОДАЛИ можливість міняти дати/гостей + (за потреби) статус/причину
+
         fields = [
             'check_in',
             'check_out',
@@ -187,9 +187,9 @@ class BookingUpdateSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         """
-        ✅ Бізнес-логіка: дати/гостей можна змінювати лише поки бронювання не стартувало
+         Бізнес-логіка: дати/гостей можна змінювати лише поки бронювання не стартувало
         і не є завершеним/скасованим.
-        (За потреби правила можна послабити/змінити.)
+
         """
         booking: Booking = self.instance
         if not booking:
@@ -219,13 +219,13 @@ class BookingUpdateSerializer(serializers.ModelSerializer):
         return attrs
 
     def update(self, instance, validated_data):
-        # ✅ застосовуємо зміни
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
-        # ✅ перетворюємо Django ValidationError → DRF ValidationError (400 замість 500)
+
         try:
-            instance.save()  # у тебе всередині save() викликається full_clean()
+            instance.save()
         except DjangoValidationError as e:
             if hasattr(e, "message_dict"):
                 raise DRFValidationError(e.message_dict)

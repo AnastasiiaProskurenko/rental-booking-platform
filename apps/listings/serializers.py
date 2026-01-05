@@ -182,7 +182,7 @@ class LocationSerializerMixin(serializers.Serializer):
 class ListingSerializer(LocationSerializerMixin, serializers.ModelSerializer):
     """
     Повний серіалізатор для оголошень
-    ✅ З валідацією унікальності адреси та використанням констант
+     З валідацією унікальності адреси та використанням констант
     """
 
     # Read-only поля
@@ -236,7 +236,7 @@ class ListingSerializer(LocationSerializerMixin, serializers.ModelSerializer):
             'latitude',
             'longitude',
 
-            # ✅ Готельна квартира
+            #  Готельна квартира
             'is_hotel_apartment',
             'hotel_rooms_count',
 
@@ -304,7 +304,7 @@ class ListingSerializer(LocationSerializerMixin, serializers.ModelSerializer):
 
     def get_hotel_rooms_count(self, obj):
         """
-        ✅ Кількість готельних кімнат на адресі
+         Кількість готельних кімнат на адресі
         """
         if not obj.is_hotel_apartment:
             return 0
@@ -316,17 +316,17 @@ class ListingSerializer(LocationSerializerMixin, serializers.ModelSerializer):
 
     def validate_title(self, value):
         """
-        ✅ Валідація заголовку з константами
+         Валідація заголовку з константами
         """
         value = value.strip()
 
-        if len(value) < LISTING_TITLE_MIN_LENGTH:  # ✅ Константа
+        if len(value) < LISTING_TITLE_MIN_LENGTH:
             raise serializers.ValidationError(
                 f'Title must be at least {LISTING_TITLE_MIN_LENGTH} characters. '
                 f'Current length: {len(value)}'
             )
 
-        if len(value) > LISTING_TITLE_MAX_LENGTH:  # ✅ Константа
+        if len(value) > LISTING_TITLE_MAX_LENGTH:
             raise serializers.ValidationError(
                 f'Title cannot exceed {LISTING_TITLE_MAX_LENGTH} characters. '
                 f'Current length: {len(value)}'
@@ -336,17 +336,17 @@ class ListingSerializer(LocationSerializerMixin, serializers.ModelSerializer):
 
     def validate_description(self, value):
         """
-        ✅ Валідація опису з константами
+         Валідація опису з константами
         """
         value = value.strip()
 
-        if len(value) < LISTING_DESCRIPTION_MIN_LENGTH:  # ✅ Константа
+        if len(value) < LISTING_DESCRIPTION_MIN_LENGTH:
             raise serializers.ValidationError(
                 f'Description must be at least {LISTING_DESCRIPTION_MIN_LENGTH} characters. '
                 f'Current length: {len(value)}'
             )
 
-        if len(value) > LISTING_DESCRIPTION_MAX_LENGTH:  # ✅ Константа
+        if len(value) > LISTING_DESCRIPTION_MAX_LENGTH:
             raise serializers.ValidationError(
                 f'Description cannot exceed {LISTING_DESCRIPTION_MAX_LENGTH} characters. '
                 f'Current length: {len(value)}'
@@ -356,9 +356,9 @@ class ListingSerializer(LocationSerializerMixin, serializers.ModelSerializer):
 
     def validate_num_rooms(self, value):
         """
-        ✅ Валідація кількості кімнат з константами
+         Валідація кількості кімнат з константами
         """
-        if value < MIN_ROOMS or value > MAX_ROOMS:  # ✅ Константи
+        if value < MIN_ROOMS or value > MAX_ROOMS:
             raise serializers.ValidationError(
                 f'Number of rooms must be between {MIN_ROOMS} and {MAX_ROOMS}. '
                 f'Got: {value}'
@@ -367,9 +367,9 @@ class ListingSerializer(LocationSerializerMixin, serializers.ModelSerializer):
 
     def validate_max_guests(self, value):
         """
-        ✅ Валідація кількості гостей з константами
+        Валідація кількості гостей з константами
         """
-        if value < MIN_GUESTS or value > MAX_GUESTS:  # ✅ Константи
+        if value < MIN_GUESTS or value > MAX_GUESTS:
             raise serializers.ValidationError(
                 f'Maximum guests must be between {MIN_GUESTS} and {MAX_GUESTS}. '
                 f'Got: {value}'
@@ -378,9 +378,9 @@ class ListingSerializer(LocationSerializerMixin, serializers.ModelSerializer):
 
     def validate_price(self, value):
         """
-        ✅ Валідація ціни з константами
+         Валідація ціни з константами
         """
-        if value < MIN_PRICE or value > MAX_PRICE:  # ✅ Константи
+        if value < MIN_PRICE or value > MAX_PRICE:
             raise serializers.ValidationError(
                 f'Price must be between {MIN_PRICE} and {MAX_PRICE}. '
                 f'Got: {value}'
@@ -389,7 +389,7 @@ class ListingSerializer(LocationSerializerMixin, serializers.ModelSerializer):
 
     def validate(self, attrs):
         """
-        ✅ Комплексна валідація з константами
+         Комплексна валідація з константами
         """
         # Валідація адреси (викликає model.clean())
         # Це перевірить унікальність та готельні квартири
@@ -410,7 +410,7 @@ class ListingSerializer(LocationSerializerMixin, serializers.ModelSerializer):
 
         # Валідація готельних квартир
         if is_hotel:
-            # ✅ Перевірка максимальної кількості кімнат
+            #  Перевірка максимальної кількості кімнат
             target_location = location or (self.instance.location if self.instance else None)
             if self.instance:
                 # При оновленні
@@ -425,7 +425,7 @@ class ListingSerializer(LocationSerializerMixin, serializers.ModelSerializer):
                     owner=attrs['owner']
                 )
 
-            if current_count >= MAX_HOTEL_ROOMS_PER_ADDRESS:  # ✅ Константа
+            if current_count >= MAX_HOTEL_ROOMS_PER_ADDRESS:
                 raise serializers.ValidationError({
                     'is_hotel_apartment': (
                         f'Maximum number of hotel rooms ({MAX_HOTEL_ROOMS_PER_ADDRESS}) '
@@ -473,7 +473,7 @@ class ListingSerializer(LocationSerializerMixin, serializers.ModelSerializer):
 class ListingCreateSerializer(LocationSerializerMixin, serializers.ModelSerializer):
     """
     Серіалізатор для створення оголошення
-    ✅ З завантаженням фото та використанням констант
+     З завантаженням фото та використанням констант
     """
 
     # Поля для завантаження фото
@@ -481,7 +481,7 @@ class ListingCreateSerializer(LocationSerializerMixin, serializers.ModelSerializ
         child=serializers.ImageField(),
         write_only=True,
         required=False,
-        help_text=f'Список фото для завантаження (макс {LISTING_PHOTOS_MAX_COUNT})'  # ✅ Константа
+        help_text=f'Список фото для завантаження (макс {LISTING_PHOTOS_MAX_COUNT})'
     )
 
     # IDs зручностей
@@ -532,16 +532,16 @@ class ListingCreateSerializer(LocationSerializerMixin, serializers.ModelSerializ
 
     def validate_uploaded_photos(self, value):
         """
-        ✅ Валідація завантажених фото з константами
+         Валідація завантажених фото з константами
         """
-        # ✅ Перевірка кількості
+        #  Перевірка кількості
         if len(value) > LISTING_PHOTOS_MAX_COUNT:
             raise serializers.ValidationError(
                 f'Maximum {LISTING_PHOTOS_MAX_COUNT} photos allowed. '
                 f'Got: {len(value)}'
             )
 
-        # ✅ Перевірка розміру кожного фото
+        #  Перевірка розміру кожного фото
         for photo in value:
             if photo.size > LISTING_PHOTO_MAX_SIZE_BYTES:
                 raise serializers.ValidationError(
@@ -609,7 +609,7 @@ class ListingCreateSerializer(LocationSerializerMixin, serializers.ModelSerializ
 
 class ListingListSerializer(serializers.ModelSerializer):
     """
-    ✅ Короткий серіалізатор для списку оголошень:
+    Короткий серіалізатор для списку оголошень:
     тільки назва, ціна, локація, головна фотка, кімнати, макс гостей
     """
     location = LocationSerializer(read_only=True)
@@ -656,7 +656,7 @@ class ListingListSerializer(serializers.ModelSerializer):
 class ListingDetailSerializer(ListingSerializer):
     """
     Детальний серіалізатор для окремого оголошення
-    ✅ Включає всю інформацію
+     Включає всю інформацію
     """
 
     # Додаємо інформацію про власника
@@ -684,7 +684,7 @@ class ListingDetailSerializer(ListingSerializer):
 
     def get_price_breakdown(self, obj):
         """
-        ✅ Розрахунок ціни за різну кількість ночей
+         Розрахунок ціни за різну кількість ночей
         """
         # Приклади для 1, 3, 7 ночей
         return {
@@ -754,7 +754,7 @@ class PublicListingDetailSerializer(PublicListingSerializer):
 
 def validate_listing_address(listing_data: dict, owner, instance=None) -> dict:
     """
-    ✅ Валідація адреси оголошення з константами
+     Валідація адреси оголошення з константами
 
     Args:
         listing_data: Дані оголошення
@@ -819,7 +819,7 @@ def validate_listing_address(listing_data: dict, owner, instance=None) -> dict:
             )
             return errors
 
-        # ✅ Перевірка максимальної кількості
+        #  Перевірка максимальної кількості
         if existing_on_address.count() >= MAX_HOTEL_ROOMS_PER_ADDRESS:
             errors['address'] = (
                 f'Maximum number of hotel rooms ({MAX_HOTEL_ROOMS_PER_ADDRESS}) '
