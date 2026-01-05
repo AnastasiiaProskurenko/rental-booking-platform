@@ -1,0 +1,268 @@
+from rest_framework import viewsets, permissions, status, filters
+from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer, TemplateHTMLRenderer
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from django.db import transaction
+
+from django.db.models import ProtectedError
+from rest_framework import status
+from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
+from datetime import timedelta
+from django.utils import timezone
+from apps.search.models import SearchHistory
+
+from .models import Listing, ListingPhoto
+from .serializers import (
+    ListingSerializer,
+    ListingDetailSerializer,
+    ListingPhotoSerializer,
+    PublicListingSerializer,
+    PublicListingDetailSerializer,
+    ListingListSerializer,
+)
+from .filters import ListingFilter
+from .permissions import IsOwnerOrReadOnly, IsOwnerToCreate, IsOwnerRoleOrAdmin
+from ..analytics.models import ListingView
+
+
+class ListingViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet для оголошень
+
+    list: Список оголошень
+    retrieve: Деталі оголошення
+    create: Створити оголошення
+    update: Оновити оголошення
+    partial_update: Частково оновити оголошення
+    destroy: Видалити оголошення
+    """
+
+    queryset = (
+        Listing.objects
+        .select_related("location", "owner")
+        .prefetch_related("photos")  # ✅
+        .all()
+    )
+
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly,
+        IsOwnerToCreate,
+        IsOwnerOrReadOnly,
+    ]
+    renderer_classes = [JSONRenderer, BrowsableAPIRenderer, TemplateHTMLRenderer]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = ListingFilter
+    search_fields = ['title', 'description', 'location__city', 'location__address']
+    ordering_fields = ['price', 'created_at', 'rating']
+    ordering = ['-created_at']
+
+    def list(self, request, *args, **kwargs):
+        if request.accepted_renderer.format == 'html':
+            return Response({
+                'page_title': 'Оголошення',
+                'api_endpoint': '/api/listings/',
+            }, template_name='listings/listings.html')
+
+        queryset = self.filter_queryset(self.get_queryset())
+
+        search_query = request.query_params.get('search', '').strip()
+        filters_data = {
+            key: value
+            for key, value in request.query_params.items()
+            if key not in {'search', 'page', 'page_size', 'ordering'}
+            and value not in {'', None}
+        }
+
+        if search_query or filters_data:
+            SearchHistory.objects.create(
+                user=request.user if request.user.is_authenticated else None,
+                query=search_query,
+                filters=filters_data,
+                results_count=queryset.count(),
+            )
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+
+    def retrieve(self, request, *args, **kwargs):
+        listing = self.get_object()
+
+        now = timezone.now()
+        since = now - timedelta(hours=24)
+
+        ip = request.META.get("REMOTE_ADDR")
+        ua = (request.META.get("HTTP_USER_AGENT") or "")[:255]
+        user = request.user if request.user.is_authenticated else None
+
+        qs = ListingView.objects.filter(listing=listing, created_at__gte=since)
+
+        # 1 view per 24h: user OR ip (for guests)
+        should_create = True
+        if user is not None:
+            should_create = not qs.filter(user=user).exists()
+        else:
+            if ip:
+                should_create = not qs.filter(user__isnull=True, ip=ip).exists()
+
+        if should_create:
+            ListingView.objects.create(
+                listing=listing,
+                user=user,
+                ip=ip,
+                user_agent=ua,
+            )
+
+        serializer = self.get_serializer(listing)
+        return Response(serializer.data)
+
+    def get_serializer_class(self):
+        """Використовувати детальний серіалізатор для retrieve"""
+        is_authenticated = self.request and self.request.user.is_authenticated
+
+        if self.action == 'retrieve':
+            return ListingDetailSerializer if is_authenticated else PublicListingDetailSerializer
+
+        if self.action in ('list', 'my_listings'):
+            return ListingListSerializer
+
+        return ListingSerializer
+
+    def perform_create(self, serializer):
+        photo = serializer.save()
+
+        # якщо в цієї об’яви ще немає головного фото — зробити це фото головним
+        if not photo.__class__.objects.filter(listing=photo.listing, is_main=True).exclude(id=photo.id).exists():
+            photo.is_main = True
+            photo.save(update_fields=["is_main"])
+
+    @action(detail=True, methods=['post'])
+    def activate(self, request, pk=None):
+        """Активувати оголошення"""
+        listing = self.get_object()
+        listing.is_active = True
+        listing.save()
+        return Response({'status': 'activated'})
+
+    @action(detail=True, methods=['post'])
+    def deactivate(self, request, pk=None):
+        """Деактивувати оголошення"""
+        listing = self.get_object()
+        listing.is_active = False
+        listing.save()
+        return Response({'status': 'deactivated'})
+
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[IsAuthenticated, IsOwnerRoleOrAdmin],
+        url_path='my_listings'
+    )
+    def my_listings(self, request):
+        """
+        ✅ Повертає оголошення поточного користувача
+        GET /api/listings/my_listings/
+        """
+        queryset = self.get_queryset().filter(owner=request.user)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            self.perform_destroy(instance)
+        except ProtectedError:
+            return Response(
+                {
+                    "detail": "Listing cannot be deleted because it has related objects (bookings, reviews, etc.)."
+                },
+                status=status.HTTP_409_CONFLICT
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ListingPhotoViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet для фото оголошень
+
+    list: Список фото
+    retrieve: Деталі фото
+    create: Додати фото
+    update: Оновити фото
+    destroy: Видалити фото
+    """
+
+    queryset = ListingPhoto.objects.all()
+    serializer_class = ListingPhotoSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+
+    def get_queryset(self):
+        """Фільтрувати фото по оголошенню"""
+        queryset = super().get_queryset()
+        listing_id = self.request.query_params.get('listing_id')
+        if listing_id:
+            queryset = queryset.filter(listing_id=listing_id)
+        return queryset
+
+    def perform_create(self, serializer):
+        """Зберегти фото"""
+        serializer.save()
+
+    @action(detail=True, methods=["post"], url_path="set_main")
+    def set_main(self, request, pk=None):
+        photo = self.get_object()
+
+        with transaction.atomic():
+            # знімаємо main тільки у фото ЦІЄЇ об’яви
+            photo.__class__.objects.filter(listing=photo.listing, is_main=True).update(is_main=False)
+
+            # ставимо main вибраному фото
+            photo.is_main = True
+            photo.save(update_fields=["is_main"])
+
+        return Response({"status": "main photo set"}, status=status.HTTP_200_OK)
+
+
+# ════════════════════════════════════════════════════════════════════
+# ПРИМІТКИ
+# ════════════════════════════════════════════════════════════════════
+
+"""
+ENDPOINTS:
+──────────────────────────────────────────────────────────────────────
+
+ListingViewSet:
+    GET    /api/listings/                    - Список оголошень
+    POST   /api/listings/                    - Створити оголошення
+    GET    /api/listings/{id}/               - Деталі оголошення
+    PUT    /api/listings/{id}/               - Оновити оголошення
+    PATCH  /api/listings/{id}/               - Частково оновити
+    DELETE /api/listings/{id}/               - Видалити оголошення
+    POST   /api/listings/{id}/activate/      - Активувати
+    POST   /api/listings/{id}/deactivate/    - Деактивувати
+
+ListingPhotoViewSet:
+    GET    /api/listing-photos/              - Список фото
+    POST   /api/listing-photos/              - Додати фото
+    GET    /api/listing-photos/{id}/         - Деталі фото
+    PUT    /api/listing-photos/{id}/         - Оновити фото
+    DELETE /api/listing-photos/{id}/         - Видалити фото
+    POST   /api/listing-photos/{id}/set_main/ - Встановити головним
+
+ФІЛЬТРАЦІЯ:
+──────────────────────────────────────────────────────────────────────
+GET /api/listings/?listing_type=apartment&city=Kyiv&min_price=100&max_price=500
+"""

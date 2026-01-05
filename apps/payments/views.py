@@ -1,0 +1,144 @@
+from rest_framework import viewsets, permissions, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework.exceptions import ValidationError as DRFValidationError
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
+from .models import Payment, Refund
+from .serializers import PaymentSerializer, RefundSerializer
+
+
+
+class PaymentViewSet(viewsets.ModelViewSet):
+    queryset = Payment.objects.all()
+    serializer_class = PaymentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['status', 'booking']
+    search_fields = ['transaction_id']
+    ordering_fields = ['created_at', 'amount']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.is_admin():
+            return Payment.objects.select_related('customer', 'booking')
+
+        elif user.is_owner():
+            return Payment.objects.filter(
+                booking__listing__owner=user
+            ).select_related('customer', 'booking')
+
+        return Payment.objects.filter(
+            customer=user
+        ).select_related('customer', 'booking')
+
+    def perform_create(self, serializer):
+        booking = serializer.validated_data['booking']
+
+        try:
+            serializer.save(
+                customer=self.request.user,
+                amount=booking.total_price
+            )
+        except DjangoValidationError as e:
+            # превращаем model ValidationError → нормальный HTTP 400
+            raise DRFValidationError(e.message_dict)
+
+    @action(detail=True, methods=['post'])
+    def process_payment(self, request, pk=None):
+
+        payment = self.get_object()
+        if payment.status != 'pending':
+            return Response(
+                {'error': 'Only pending payments can be processed.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Simulate payment processing
+        payment.status = 'completed'
+        payment.transaction_id = f"txn_{payment.id}_{request.user.id}"
+        payment.save()
+
+        return Response({'status': 'Payment processed successfully'})
+
+    @action(detail=False, methods=['get'])
+    def my_payments(self, request):
+
+        payments = self.get_queryset().filter(customer=request.user)
+        serializer = self.get_serializer(payments, many=True)
+        return Response(serializer.data)
+
+
+class RefundViewSet(viewsets.ModelViewSet):
+    queryset = Refund.objects.all()
+    serializer_class = RefundSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['status', 'payment']
+    search_fields = ['reason']
+    ordering_fields = ['created_at', 'amount']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if hasattr(user, 'is_admin') and user.is_admin():
+
+            return Refund.objects.select_related('payment', 'processed_by')
+        elif hasattr(user, 'is_owner') and user.is_owner():
+
+            return Refund.objects.filter(
+                payment__booking__listing__owner=user
+            ).select_related('payment', 'processed_by')
+        else:
+
+            return Refund.objects.filter(
+                payment__customer=user
+            ).select_related('payment', 'processed_by')
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+
+        if not request.user.is_admin():
+            return Response(
+                {'error': 'Only admins can approve refunds.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        refund = self.get_object()
+        if refund.status != 'pending':
+            return Response(
+                {'error': 'Only pending refunds can be approved.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        refund.status = 'approved'
+        refund.processed_by = request.user
+        refund.save()
+
+        return Response({'status': 'Refund approved'})
+
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+
+        if not request.user.is_admin():
+            return Response(
+                {'error': 'Only admins can reject refunds.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        refund = self.get_object()
+        if refund.status != 'pending':
+            return Response(
+                {'error': 'Only pending refunds can be rejected.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        refund.status = 'rejected'
+        refund.processed_by = request.user
+        refund.save()
+
+        return Response({'status': 'Refund rejected'})
