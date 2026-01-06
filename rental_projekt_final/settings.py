@@ -19,7 +19,8 @@ ALLOWED_HOSTS = env.str('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 
 ENVIRONMENT = os.environ.get('DJANGO_ENVIRONMENT', 'development')
-LOGGING = get_logging_config('development')
+#LOGGING = get_logging_config('development')
+LOGGING = get_logging_config(ENVIRONMENT)
 
 # Application definition
 INSTALLED_APPS = [
@@ -88,6 +89,9 @@ if env.bool('MYSQL'):
             'PASSWORD': env.str('MYSQL_PASSWORD'),
             'HOST': env.str('MYSQL_HOST'),
             'PORT': env.int('MYSQL_PORT'),
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+            },
         }
     }
 else:

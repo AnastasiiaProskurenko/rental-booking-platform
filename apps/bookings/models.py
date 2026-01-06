@@ -309,26 +309,32 @@ class Booking(TimeModel):
 
     def _validate_date_overlap(self):
         """
-         Валідація перетину дат
-        Перевіряє чи немає інших підтверджених бронювань на ці дати
+        Валідація перетину дат.
+
+        Бізнес-логіка:
+        - PENDING може перетинатися (заявки/розгляд).
+        - CONFIRMED та IN_PROGRESS не можуть перетинатися (слот зайнятий).
+        - COMPLETED/CANCELLED не блокують (історія).
         """
         if not all([self.check_in, self.check_out, self.listing_id]):
             return
 
-        # Знаходимо перетинаючі бронювання
-        overlapping = Booking.objects.filter(
-            listing=self.listing,
-            status__in=[
-                BookingStatus.PENDING,
-                BookingStatus.CONFIRMED,
-                BookingStatus.IN_PROGRESS
-            ]
-        ).exclude(
-            pk=self.pk if self.pk else None
-        ).filter(
-            # Перетин дат
-            check_in__lt=self.check_out,
-            check_out__gt=self.check_in
+        # Якщо поточне бронювання має статус, який НЕ блокує слот — не перевіряємо
+        # (PENDING/COMPLETED/CANCELLED можуть існувати паралельно з іншими)
+        blocking_statuses = {BookingStatus.CONFIRMED, BookingStatus.IN_PROGRESS}
+
+        if self.status not in blocking_statuses:
+            return
+
+        overlapping = (
+            Booking.objects
+            .filter(
+                listing=self.listing,
+                status__in=list(blocking_statuses),
+                check_in__lt=self.check_out,
+                check_out__gt=self.check_in,
+            )
+            .exclude(pk=self.pk)
         )
 
         if overlapping.exists():

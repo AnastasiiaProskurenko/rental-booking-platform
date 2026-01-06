@@ -1,16 +1,32 @@
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework_simplejwt.views import TokenRefreshView
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from apps.users.views import EmailTokenObtainPairView
 from django.conf import settings
 from django.conf.urls.static import static
 
+from rest_framework_simplejwt.views import TokenRefreshView
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+
+from apps.users.views import EmailTokenObtainPairView
+
+
+# Один набір API роутів, який підключаємо двічі: /api/ та /api/v1/
+api_patterns = [
+    path('', include('apps.users.api_urls')),
+    path('', include('apps.reviews.urls')),
+    path('', include('apps.listings.urls')),
+    path('', include('apps.bookings.urls')),
+    path('', include('apps.notifications.urls')),
+    path('', include('apps.payments.urls')),
+    path('', include('apps.search.urls')),
+    path('', include('apps.analytics.urls')),
+]
+
+
 urlpatterns = [
     # ============================================
-    # HTML сторінки (✅ ДОДАТИ)
+    # HTML сторінки
     # ============================================
-    path('', include('apps.users.urls')),  # ✅ ДОДАТИ - HTML на /
+    path('', include('apps.users.urls')),
 
     # ============================================
     # Admin
@@ -24,23 +40,18 @@ urlpatterns = [
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     # ============================================
-    # API Documentation
+    # API Documentation (без версії)
     # ============================================
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 
     # ============================================
-    # API endpoints
+    # API endpoints (дві версії одночасно)
     # ============================================
-    path('api/', include('apps.users.api_urls')),  # ✅ ЗМІНИТИ - API на /api/
-    path('api/', include('apps.reviews.urls')),
-    path('api/', include('apps.listings.urls')),
-    path('api/', include('apps.bookings.urls')),
-    path('api/', include('apps.notifications.urls')),
-    path('api/', include('apps.payments.urls')),
-    path('api/', include('apps.search.urls')),
-    path('api/', include('apps.analytics.urls')),
+    path('api/', include((api_patterns, 'api'), namespace='api')),
+    path('api/v1/', include((api_patterns, 'api_v1'), namespace='api_v1')),
 ]
+
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

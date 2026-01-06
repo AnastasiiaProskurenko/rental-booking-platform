@@ -80,6 +80,7 @@ class Review(TimeModel):
     comment = models.TextField(
         max_length=REVIEW_COMMENT_MAX_LENGTH,
         blank=True,
+        null=True,
         verbose_name='Comment',
         help_text=(
             f'Текстовий відгук (мінімум {REVIEW_COMMENT_MIN_LENGTH}, '
