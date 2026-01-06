@@ -135,12 +135,9 @@ class ListingViewSet(viewsets.ModelViewSet):
         return ListingSerializer
 
     def perform_create(self, serializer):
-        photo = serializer.save()
+        serializer.save(owner=self.request.user)
 
-        # якщо в цієї об’яви ще немає головного фото — зробити це фото головним
-        if not photo.__class__.objects.filter(listing=photo.listing, is_main=True).exclude(id=photo.id).exists():
-            photo.is_main = True
-            photo.save(update_fields=["is_main"])
+
 
     @action(detail=True, methods=['post'])
     def activate(self, request, pk=None):
