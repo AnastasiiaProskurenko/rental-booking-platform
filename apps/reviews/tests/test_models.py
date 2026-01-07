@@ -13,7 +13,7 @@ class ReviewModelTests(TestCase):
         listing = make_listing(owner=owner)
         booking = make_booking(listing=listing, customer=customer, status=BookingStatus.COMPLETED)
 
-        r = Review(booking=booking, listing=listing, reviewer=customer, rating=5, comment="ok")
+        r = Review(booking=booking, listing=listing, reviewer=customer, rating=5, comment="Everything was great!")
         r.full_clean()
         r.save()
         self.assertEqual(Review.objects.count(), 1)

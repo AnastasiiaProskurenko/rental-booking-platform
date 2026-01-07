@@ -53,7 +53,16 @@ class ListingViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ListingFilter
     search_fields = ['title', 'description', 'location__city', 'location__address']
-    ordering_fields = ['price', 'created_at', 'rating']
+    ordering_fields = [
+        "price",
+        "created_at",
+        "area",
+        "max_guests",
+        "num_rooms",
+        "num_bedrooms",
+        "num_bathrooms",
+        "property_type",
+    ]
     ordering = ['-created_at']
 
     def list(self, request, *args, **kwargs):
